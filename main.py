@@ -5,6 +5,7 @@ from machine import Pin, reset
 import ntptime
 import uasyncio as asyncio
 import config
+import urequests
 
 # LED setup
 led = Pin("LED", Pin.OUT)
