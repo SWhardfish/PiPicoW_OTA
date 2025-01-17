@@ -9,6 +9,8 @@ import urequests
 import os
 
 
+
+
 # LED setup
 led = Pin("LED", Pin.OUT)
 
@@ -20,8 +22,15 @@ SCRIPT_NAME = "main.py"  # Script to update
 # Log file
 LOG_FILE = "system_log.txt"
 
+# Function to check if a file exists
+def file_exists(filename):
+    try:
+        os.stat(filename)
+        return True
+    except OSError:
+        return False
 
-# Check for updates on GitHub
+# Function to check for OTA updates
 def check_for_updates():
     try:
         # GitHub API URL for the raw file
@@ -34,7 +43,7 @@ def check_for_updates():
             new_code = response.text
 
             # Check if the new code differs from the current code
-            if not os.path.exists(SCRIPT_NAME) or open(SCRIPT_NAME).read() != new_code:
+            if not file_exists(SCRIPT_NAME) or open(SCRIPT_NAME).read() != new_code:
                 print("Update available. Applying update...")
                 with open(SCRIPT_NAME, "w") as f:
                     f.write(new_code)
