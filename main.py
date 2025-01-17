@@ -45,11 +45,11 @@ def check_for_updates():
             # Check if the new code differs from the current code
             if not file_exists(SCRIPT_NAME) or open(SCRIPT_NAME).read() != new_code:
                 print("Update available. Applying update...")
+                flash_led(2, delay=5.0)
                 with open(SCRIPT_NAME, "w") as f:
                     f.write(new_code)
                 print("Update applied. Restarting...")
                 log_event("OTA update applied. Restarting...")
-                flash_led(1, delay=5)
                 machine.reset()  # Restart the device to apply the update
             else:
                 print("No updates available.")
