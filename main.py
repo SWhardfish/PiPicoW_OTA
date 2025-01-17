@@ -49,6 +49,7 @@ def check_for_updates():
                     f.write(new_code)
                 print("Update applied. Restarting...")
                 log_event("OTA update applied. Restarting...")
+                flash_led(1, delay=5)
                 machine.reset()  # Restart the device to apply the update
             else:
                 print("No updates available.")
