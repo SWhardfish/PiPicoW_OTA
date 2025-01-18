@@ -306,22 +306,22 @@ async def serve(client):
     finally:
         client.close()
 
-    # Serve log function
-    def serve_log(client):
-        try:
-            with open(LOG_FILE, "r") as log_file:
-                logs = log_file.read()
-            response = f"""\
+# Serve log function
+def serve_log(client):
+    try:
+        with open(LOG_FILE, "r") as log_file:
+            logs = log_file.read()
+        response = f"""\
     HTTP/1.1 200 OK
     Content-Type: text/plain
-
+    
     {logs}
     """
-            client.send(response)
-        except Exception as e:
-            print(f"Error serving log: {e}")
-            response = "HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\n\r\nAn error occurred."
-            client.send(response)
+        client.send(response)
+    except Exception as e:
+        print(f"Error serving log: {e}")
+        response = "HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\n\r\nAn error occurred."
+        client.send(response)
 
 
 # Start the web server
