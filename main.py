@@ -23,10 +23,10 @@ BRANCH = "main"  # Branch to fetch updates from
 SCRIPT_NAME = "main.py"  # Script to update
 
 
-# Function to check if a file exists
-def file_exists(filename):
+# Check if file exists
+def file_exists(path):
     try:
-        os.stat(filename)
+        uos.stat(path)
         return True
     except OSError:
         return False
@@ -99,23 +99,25 @@ def log_event(message, t=None):
         log_message = f"{formatted_time} - {message}"
         print(log_message)
 
-        # Check log file size before appending
-        if uos.stat(LOG_FILE)[6] >= MAX_LOG_SIZE:
+        # Check if log file exists and its size
+        if file_exists(LOG_FILE) and uos.stat(LOG_FILE)[6] >= MAX_LOG_SIZE:
             print("Log file size exceeded, rotating log file.")
             rotate_log_file()
 
-        # Append to log file
+        # Append the message to the log file
         with open(LOG_FILE, "a") as log_file:
             log_file.write(log_message + "\n")
+
     except Exception as e:
         print(f"Error logging event: {e}")
 
-# Log file rotation function
+# Rotate log file function
 def rotate_log_file():
     try:
         # Create a backup of the current log file
-        uos.rename(LOG_FILE, LOG_FILE + ".bak")
-        print("Log file rotated. Old log saved as system_log.txt.bak")
+        if file_exists(LOG_FILE):
+            uos.rename(LOG_FILE, LOG_FILE + ".bak")
+            print("Log file rotated. Old log saved as system_log.txt.bak")
     except Exception as e:
         print(f"Error rotating log file: {e}")
 
@@ -309,14 +311,21 @@ async def serve(client):
 # Serve log function
 def serve_log(client):
     try:
+        if not file_exists(LOG_FILE):
+            raise FileNotFoundError("Log file does not exist.")
+
         with open(LOG_FILE, "r") as log_file:
             logs = log_file.read()
         response = f"""\
-    HTTP/1.1 200 OK
-    Content-Type: text/plain
-    
-    {logs}
-    """
+HTTP/1.1 200 OK
+Content-Type: text/plain
+
+{logs}
+"""
+        client.send(response)
+    except FileNotFoundError as e:
+        print(f"Error serving log: {e}")
+        response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nLog file not found."
         client.send(response)
     except Exception as e:
         print(f"Error serving log: {e}")
