@@ -12,10 +12,12 @@ import os
 # LED setup
 led = Pin("LED", Pin.OUT)
 
+
 # GitHub OTA Configuration
 GITHUB_REPO = "SWhardfish/PiPicoW_OTA"  # Replace with your GitHub repo
 BRANCH = "main"  # Branch to fetch updates from
 SCRIPT_NAME = "main.py"  # Script to update
+
 
 # Log file
 LOG_FILE = "system_log.txt"
@@ -28,6 +30,13 @@ def file_exists(filename):
     except OSError:
         return False
 
+
+# Function to normalize script content
+def normalize_code(code):
+    """Normalize code by stripping trailing spaces and converting line endings to '\n'."""
+    return "\n".join(line.rstrip() for line in code.splitlines())
+
+
 # Function to check for OTA updates
 def check_for_updates():
     try:
@@ -38,26 +47,38 @@ def check_for_updates():
         response = urequests.get(url)
 
         if response.status_code == 200:
-            new_code = response.text
+            new_code = normalize_code(response.text)
 
             # Check if the new code differs from the current code
-            if not file_exists(SCRIPT_NAME) or open(SCRIPT_NAME).read() != new_code:
-                print("Update available. Applying update...")
+            if not file_exists(SCRIPT_NAME):
+                print("No existing script found. Applying update...")
                 flash_led(2, delay=5.0)
-                with open(SCRIPT_NAME, "w") as f:
-                    f.write(new_code)
-                print("Update applied. Restarting...")
-                log_event("OTA update applied. Restarting...")
-                machine.reset()  # Restart the device to apply the update
+                update_script(new_code)
             else:
-                print("No updates available.")
-                log_event("Checked for updates: no updates available.")
+                with open(SCRIPT_NAME, "r") as f:
+                    current_code = normalize_code(f.read())
+                if current_code != new_code:
+                    print("Update available. Applying update...")
+                    update_script(new_code)
+                else:
+                    print("No updates available.")
+                    log_event("Checked for updates: no updates available.")
         else:
             print(f"Failed to fetch update: {response.status_code}")
             log_event(f"Failed to fetch update: {response.status_code}")
     except Exception as e:
         print(f"Error during OTA update: {e}")
         log_event(f"Error during OTA update: {e}")
+
+
+# Function to update the script and restart
+def update_script(new_code):
+    with open(SCRIPT_NAME, "w") as f:
+        f.write(new_code)
+    print("Update applied. Restarting...")
+    log_event("OTA update applied. Restarting...")
+    machine.reset()  # Restart the device to apply the update
+
 
 # Function to flash the onboard LED
 def flash_led(times, delay=0.2):
