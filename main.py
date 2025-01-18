@@ -9,8 +9,6 @@ import urequests
 import os
 
 
-
-
 # LED setup
 led = Pin("LED", Pin.OUT)
 
