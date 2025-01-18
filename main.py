@@ -7,20 +7,21 @@ import uasyncio as asyncio
 import config
 import urequests
 import os
+import uos
 
 
 # LED setup
 led = Pin("LED", Pin.OUT)
 
+# Log file
+LOG_FILE = "system_log.txt"
+MAX_LOG_SIZE = 10 * 1024  # Maximum log file size in bytes (e.g., 10 KB)
 
 # GitHub OTA Configuration
 GITHUB_REPO = "SWhardfish/PiPicoW_OTA"  # Replace with your GitHub repo
 BRANCH = "main"  # Branch to fetch updates from
 SCRIPT_NAME = "main.py"  # Script to update
 
-
-# Log file
-LOG_FILE = "system_log.txt"
 
 # Function to check if a file exists
 def file_exists(filename):
@@ -91,15 +92,32 @@ def flash_led(times, delay=0.2):
 
 # Log event function
 def log_event(message, t=None):
-    if t is None:
-        t = time.localtime()
-    formatted_time = "{:04}-{:02}-{:02} {:02}:{:02}:{:02}".format(*t)
-    log_message = f"{formatted_time} - {message}"
-    print(log_message)
+    try:
+        if t is None:
+            t = time.localtime()
+        formatted_time = "{:04}-{:02}-{:02} {:02}:{:02}:{:02}".format(*t)
+        log_message = f"{formatted_time} - {message}"
+        print(log_message)
 
-    # Append to log file
-    with open(LOG_FILE, "a") as log_file:
-        log_file.write(log_message + "\n")
+        # Check log file size before appending
+        if uos.stat(LOG_FILE)[6] >= MAX_LOG_SIZE:
+            print("Log file size exceeded, rotating log file.")
+            rotate_log_file()
+
+        # Append to log file
+        with open(LOG_FILE, "a") as log_file:
+            log_file.write(log_message + "\n")
+    except Exception as e:
+        print(f"Error logging event: {e}")
+
+# Log file rotation function
+def rotate_log_file():
+    try:
+        # Create a backup of the current log file
+        uos.rename(LOG_FILE, LOG_FILE + ".bak")
+        print("Log file rotated. Old log saved as system_log.txt.bak")
+    except Exception as e:
+        print(f"Error rotating log file: {e}")
 
 
 # Connect to Wi-Fi using credentials from config.py
@@ -288,22 +306,22 @@ async def serve(client):
     finally:
         client.close()
 
-    # Function to serve the log
-def serve_log(client):
-    try:
-        with open(LOG_FILE, "r") as log_file:
-            logs = log_file.read()
-        response = f"""\
+    # Serve log function
+    def serve_log(client):
+        try:
+            with open(LOG_FILE, "r") as log_file:
+                logs = log_file.read()
+            response = f"""\
     HTTP/1.1 200 OK
     Content-Type: text/plain
 
     {logs}
     """
-        client.send(response)
-    except Exception as e:
-        log_event(f"Error serving log: {e}", time.localtime())
-        response = "HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\n\r\nAn error occurred."
-        client.send(response)
+            client.send(response)
+        except Exception as e:
+            print(f"Error serving log: {e}")
+            response = "HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\n\r\nAn error occurred."
+            client.send(response)
 
 
 # Start the web server
