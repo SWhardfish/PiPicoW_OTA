@@ -9,6 +9,7 @@ import urequests
 import uos
 
 
+
 # LED setup
 led = Pin("LED", Pin.OUT)
 
@@ -149,7 +150,7 @@ def rotate_log_file():
             uos.rename(LOG_FILE, LOG_FILE + ".bak")
             print("Log file rotated. Old log saved as system_log.txt.bak")
     except Exception as e:
-        print(f"Error rotating log fileXXXXXXXXXXX: {e}")
+        print(f"Error rotating log file: {e}")
 
 
 # Connect to Wi-Fi using credentials from config.py
