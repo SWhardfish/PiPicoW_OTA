@@ -13,7 +13,7 @@ import uos
 led = Pin("LED", Pin.OUT)
 
 # Log file
-LOG_FILE = "system_log.txt"
+LOG_FILE = "system_log2.txt"
 MAX_LOG_SIZE = 10 * 1024  # Maximum log file size in bytes (e.g., 10 KB)
 
 # GitHub OTA Configuration
