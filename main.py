@@ -58,12 +58,12 @@ def check_for_updates():
                     current_code = normalize_code(f.read())
                 if current_code != new_code:
                     print("Update available. Applying update...")
+                    update_script(new_code)
                     flash_led(1, delay=5.0)
                     flash_led(0, delay=0.5)
                     flash_led(1, delay=0.1)
                     flash_led(0, delay=0.5)
                     flash_led(1, delay=5.0)
-                    update_script(new_code)
                 else:
                     print("No updates available.")
                     t = time.localtime()
