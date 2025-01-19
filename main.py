@@ -33,7 +33,7 @@ def file_exists(path):
 
 # Function to normalize script content
 def normalize_code(code):
-    """Normalize code by stripping trailing spaces and converting line endings to '\n'."""
+    """Normalize code by stripping trailing spaces and converting line endings to XXXXXXXXXXXX'\n'."""
     return "\n".join(line.rstrip() for line in code.splitlines())
 
 def flash_led(times=None, delay=0.2, pattern=None):
