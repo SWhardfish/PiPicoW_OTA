@@ -36,6 +36,28 @@ def normalize_code(code):
     """Normalize code by stripping trailing spaces and converting line endings to '\n'."""
     return "\n".join(line.rstrip() for line in code.splitlines())
 
+def flash_led(times=None, delay=0.2, pattern=None):
+    """
+    Flash the LED with either a simple repeating pattern or a custom pattern.
+
+    :param times: Number of times to flash the LED (used for simple blinking).
+    :param delay: Delay between flashes for simple blinking.
+    :param pattern: Custom pattern as a list of (state, duration) tuples.
+                    Example: [(1, 5.0), (0, 0.5), (1, 0.1)]
+    """
+    if pattern:
+        # Use the custom pattern
+        for state, duration in pattern:
+            led.value(state)
+            time.sleep(duration)
+    elif times is not None:
+        # Use the simple blinking pattern
+        for _ in range(times):
+            led.on()
+            time.sleep(delay)
+            led.off()
+            time.sleep(delay)
+
 
 # Function to check for OTA updates
 def check_for_updates():
@@ -59,11 +81,7 @@ def check_for_updates():
                 if current_code != new_code:
                     print("Update available. Applying updateXXXXXXXXX...")
                     update_script(new_code)
-                    flash_led(1, delay=5.0)
-                    flash_led(0, delay=0.5)
-                    flash_led(1, delay=0.1)
-                    flash_led(0, delay=0.5)
-                    flash_led(1, delay=5.0)
+                    flash_led(pattern=[(1, 5.0), (0, 0.5), (1, 0.1), (0, 0.5), (1, 5.0)])  # Custom sequence
                 else:
                     print("No updates available.")
                     t = time.localtime()
@@ -94,15 +112,6 @@ def update_script(new_code):
     adjusted_time = time.mktime(t) + offset * 3600
     log_event("OTA update applied. Restarting...", time.localtime(adjusted_time))
     machine.reset()  # Restart the device to apply the update
-
-
-# Function to flash the onboard LED
-def flash_led(times, delay=0.2):
-    for _ in range(times):
-        led.on()
-        time.sleep(delay)
-        led.off()
-        time.sleep(delay)
 
 
 # Log event function
@@ -159,7 +168,7 @@ async def connect_wifi():
 
     print("Connected to Wi-Fi")
     print("Network config:", wlan.ifconfig())
-    flash_led(7, delay=0.1)
+    flash_led(times=7, delay=0.1)
     return wlan
 
 
@@ -177,7 +186,7 @@ async def monitor_wifi(wlan, ssid, password):
             if wlan.isconnected():
                 print("Wi-Fi reconnected!")
                 log_event("Wi-Fi reconnected")
-                flash_led(3, delay=0.5)
+                flash_led(times=3, delay=0.5)
             else:
                 print("Reconnection failed")
                 log_event("Wi-Fi reconnection failed")
@@ -192,7 +201,7 @@ async def sync_time():
         offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
         adjusted_time = time.mktime(t) + offset * 3600
         log_event("Time synchronized with NTP", time.localtime(adjusted_time))
-        flash_led(3, delay=0.3)
+        flash_led(times=3, delay=0.3)
     except Exception as e:
         t = time.localtime()
         offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
@@ -369,7 +378,7 @@ async def start_web_server():
     offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
     adjusted_time = time.mktime(t) + offset * 3600
     log_event("Web server started", time.localtime(adjusted_time))
-    flash_led(2, delay=1.0)
+    flash_led(times=2, delay=1.0)
 
     while True:
         client, addr = s.accept()
