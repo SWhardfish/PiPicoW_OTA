@@ -79,9 +79,10 @@ def check_for_updates():
                 with open(SCRIPT_NAME, "r") as f:
                     current_code = normalize_code(f.read())
                 if current_code != new_code:
-                    print("Update available. Applying updateXXXXXXXXX...")
+                    print("Update available. Applying update...")
                     update_script(new_code)
-                    flash_led(pattern=[(1, 5.0), (0, 0.5), (1, 0.1), (0, 0.5), (1, 5.0)])  # Custom sequence
+                    # Flash LED with the updated pattern
+                    flash_led(pattern=[(1, 5.0), (0, 0.5), (1, 0.1), (0, 0.5), (1, 5.0)])
                 else:
                     print("No updates available.")
                     t = time.localtime()
@@ -138,6 +139,7 @@ def log_event(message, t=None):
 
     except Exception as e:
         print(f"Error logging event: {e}")
+
 
 # Rotate log file function
 def rotate_log_file():
@@ -231,9 +233,15 @@ async def serve(client):
             client.send(response)
         elif "GET /log" in request:
             serve_log(client)
-        elif "GET /update" in request:  # Add this route for OTA update
-            check_for_updates()  # Trigger the OTA update check
-            response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<h1>OTA Update Triggered</h1>"
+        elif "GET /ota-update" in request:
+            try:
+                # Trigger the OTA update check
+                log_event("Manual OTA update check triggered via web.")
+                update_status = check_for_updates()
+                response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n{update_status}"
+            except Exception as e:
+                log_event(f"Error during manual OTA update: {e}")
+                response = "HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\n\r\nError checking for updates."
             client.send(response)
         else:
             response = """\
@@ -298,6 +306,11 @@ async def serve(client):
             .space {
                 margin-top: 20px;
             }
+            .status-message {
+                margin-top: 20px;
+                font-size: 18px;
+                color: #ffffff;
+                text-align: center;
         </style>
         <script>
             async function toggleLED(action) {
@@ -312,9 +325,15 @@ async def serve(client):
             }
             
             async function triggerUpdate() {
-                // Trigger OTA update check via HTTP
-                await fetch('/update');
-                alert('OTA update triggered. Check logs for details.');
+                try {
+                    const response = await fetch('/ota-update');
+                    const result = await response.text();
+                    // Display the result message on the webpage
+                    document.getElementById('update-message').innerText = result;
+                } catch (error) {
+                    // Handle errors
+                    document.getElementById('update-message').innerText = 'Failed to check for updates. Try again later.';
+                }
             }
         </script>
     </head>
