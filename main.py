@@ -13,7 +13,7 @@ import uos
 led = Pin("LED", Pin.OUT)
 
 # Log file
-LOG_FILE = "system_log1.txt"
+LOG_FILE = "system_log.txt"
 MAX_LOG_SIZE = 10 * 1024  # Maximum log file size in bytes (e.g., 10 KB)
 
 # GitHub OTA Configuration
@@ -66,13 +66,22 @@ def check_for_updates():
                     update_script(new_code)
                 else:
                     print("No updates available.")
-                    log_event("Checked for updates: no updates available.")
+                    t = time.localtime()
+                    offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
+                    adjusted_time = time.mktime(t) + offset * 3600
+                    log_event("Checked for updates: no updates available.", time.localtime(adjusted_time))
         else:
             print(f"Failed to fetch update: {response.status_code}")
-            log_event(f"Failed to fetch update: {response.status_code}")
+            t = time.localtime()
+            offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
+            adjusted_time = time.mktime(t) + offset * 3600
+            log_event(f"Failed to fetch update: {response.status_code}", time.localtime(adjusted_time))
     except Exception as e:
         print(f"Error during OTA update: {e}")
-        log_event(f"Error during OTA update: {e}")
+        t = time.localtime()
+        offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
+        adjusted_time = time.mktime(t) + offset * 3600
+        log_event(f"Error during OTA update: {e}", time.localtime(adjusted_time))
 
 
 # Function to update the script and restart
@@ -108,6 +117,10 @@ def log_event(message, t=None):
         # Check if log file exists and its size
         if file_exists(LOG_FILE) and uos.stat(LOG_FILE)[6] >= MAX_LOG_SIZE:
             print("Log file size exceeded, rotating log file.")
+            t = time.localtime()
+            offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
+            adjusted_time = time.mktime(t) + offset * 3600
+            log_event("Log file size exceeded, rotating log file.", time.localtime(adjusted_time))
             rotate_log_file()
 
         # Append the message to the log file
