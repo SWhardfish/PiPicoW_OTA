@@ -346,7 +346,7 @@ async def serve(client):
         </script>
     </head>
     <body>
-        <h1>Pi Pcio W Onboard LED Control</h1>
+        <h1>Pi Pico W Onboard LED Control</h1>
         <div class="button-container">
             <button class="on-button" onclick="toggleLED('on')">ON</button>
             <button class="off-button" onclick="toggleLED('off')">OFF</button>
