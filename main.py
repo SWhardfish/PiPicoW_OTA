@@ -104,7 +104,7 @@ def log_event(message, t=None):
 
         # Check if log file exists and its size
         if file_exists(LOG_FILE) and uos.stat(LOG_FILE)[6] >= MAX_LOG_SIZE:
-            print("Log file size exceeded, rotating log file.")
+            print("Log file size exceeded, rotating log file..")
             rotate_log_file()
 
         # Append the message to the log file
