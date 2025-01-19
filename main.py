@@ -13,7 +13,7 @@ import uos
 led = Pin("LED", Pin.OUT)
 
 # Log file
-LOG_FILE = "system_log2.txt"
+LOG_FILE = "system_log3.txt"
 MAX_LOG_SIZE = 10 * 1024  # Maximum log file size in bytes (e.g., 10 KB)
 
 # GitHub OTA Configuration
@@ -81,6 +81,10 @@ def check_for_updates():
                 if current_code != new_code:
                     print("Update available. Applying update...")
                     flash_led(pattern=[(1, 5.0), (0, 0.5), (1, 0.1), (0, 0.5), (1, 5.0)])
+                    t = time.localtime()
+                    offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
+                    adjusted_time = time.mktime(t) + offset * 3600
+                    log_event("Update available. Applying update...", time.localtime(adjusted_time))
                     update_script(new_code)
                     # Flash LED with the updated pattern
                 else:
@@ -88,7 +92,7 @@ def check_for_updates():
                     t = time.localtime()
                     offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
                     adjusted_time = time.mktime(t) + offset * 3600
-                    log_event("Checked for updates: no updates available.", time.localtime(adjusted_time))
+                    log_event("Checked for updates: No updates available.", time.localtime(adjusted_time))
         else:
             print(f"Failed to fetch update: {response.status_code}")
             t = time.localtime()
