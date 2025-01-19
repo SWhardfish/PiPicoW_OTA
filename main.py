@@ -149,7 +149,7 @@ def rotate_log_file():
             uos.rename(LOG_FILE, LOG_FILE + ".bak")
             print("Log file rotated. Old log saved as system_log.txt.bak")
     except Exception as e:
-        print(f"Error rotating log file: {e}")
+        print(f"Error rotating log fileXXXXXXXXXXX: {e}")
 
 
 # Connect to Wi-Fi using credentials from config.py
