@@ -143,7 +143,7 @@ async def connect_wifi():
 
     print("Connected to Wi-Fi")
     print("Network config:", wlan.ifconfig())
-    flash_led(5, delay=0.1)
+    flash_led(7, delay=0.1)
     return wlan
 
 
