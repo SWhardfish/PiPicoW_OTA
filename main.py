@@ -350,7 +350,7 @@ async def serve(client):
         </div>
         <div class="space"></div>
         <div class="button-container">
-            <button class="log-button" onclick="triggerUpdate()">SW Updates</button> <!-- New button -->
+            <button class="log-button" onclick="triggerUpdate()">SW UpdatesXXXXXXXXXXXXX</button> <!-- New button -->
         </div>
         <div class="status-message" id="update-message">
             <!-- The update status message will be displayed here -->
