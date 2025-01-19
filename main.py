@@ -9,6 +9,7 @@ import urequests
 import uos
 
 
+
 # LED setup
 led = Pin("LED", Pin.OUT)
 
@@ -35,6 +36,7 @@ def file_exists(path):
 def normalize_code(code):
     """Normalize code by stripping trailing spaces and converting line endings to '\n'."""
     return "\n".join(line.rstrip() for line in code.splitlines())
+
 
 def flash_led(times=None, delay=0.2, pattern=None):
     """
