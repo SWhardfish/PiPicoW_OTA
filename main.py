@@ -58,6 +58,11 @@ def check_for_updates():
                     current_code = normalize_code(f.read())
                 if current_code != new_code:
                     print("Update available. Applying update...")
+                    flash_led(1, delay=5.0)
+                    flash_led(0, delay=0.5)
+                    flash_led(1, delay=0.1)
+                    flash_led(0, delay=0.5)
+                    flash_led(1, delay=5.0)
                     update_script(new_code)
                 else:
                     print("No updates available.")
@@ -75,12 +80,10 @@ def update_script(new_code):
     with open(SCRIPT_NAME, "w") as f:
         f.write(new_code)
     print("Update applied. Restarting...")
-    log_event("OTA update applied. Restarting...")
-    flash_led(1, delay=5.0)
-    flash_led(0, delay=0.5)
-    flash_led(1, delay=0.1)
-    flash_led(0, delay=0.5)
-    flash_led(1, delay=5.0)
+    t = time.localtime()
+    offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
+    adjusted_time = time.mktime(t) + offset * 3600
+    log_event("OTA update applied. Restarting...", time.localtime(adjusted_time))
     machine.reset()  # Restart the device to apply the update
 
 
