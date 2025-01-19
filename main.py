@@ -298,7 +298,7 @@ async def serve(client):
                 width: 120px;
                 height: 25px;
                 font-size: 16px;
-                background-color: grey;
+                background-color: black;
             }
             .log-button:hover {
                 transform: scale(1.05);
@@ -335,6 +335,7 @@ async def serve(client):
                     document.getElementById('update-message').innerText = 'Failed to check for updates. Try again later.';
                 }
             }
+
         </script>
     </head>
     <body>
@@ -350,6 +351,9 @@ async def serve(client):
         <div class="space"></div>
         <div class="button-container">
             <button class="log-button" onclick="triggerUpdate()">SW Updates</button> <!-- New button -->
+        </div>
+        <div class="status-message" id="update-message">
+            <!-- The update status message will be displayed here -->
         </div>
     </body>
     </html>
