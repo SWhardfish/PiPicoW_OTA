@@ -201,20 +201,31 @@ async def monitor_wifi(wlan, ssid, password):
         await asyncio.sleep(10)  # Check every 10 seconds
 
 
-# Synchronize time using NTP
-async def sync_time():
-    try:
-        ntptime.settime()
-        t = time.localtime()
-        offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
-        adjusted_time = time.mktime(t) + offset * 3600
-        log_event("Time synchronized with NTP", time.localtime(adjusted_time))
-        flash_led(times=3, delay=0.3)
-    except Exception as e:
-        t = time.localtime()
-        offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
-        adjusted_time = time.mktime(t) + offset * 3600
-        log_event(f"Error synchronizing time: {e}", time.localtime(adjusted_time))
+# Synchronize time using NTP with retry
+async def sync_time(max_retries=3, retry_delay=5):
+    retries = 0
+    while retries < max_retries:
+        try:
+            # Attempt to synchronize time
+            ntptime.settime()
+            t = time.localtime()
+            offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
+            adjusted_time = time.mktime(t) + offset * 3600
+            log_event("Time synchronized with NTP", time.localtime(adjusted_time))
+            flash_led(times=3, delay=0.3)
+            return  # Exit the function if successful
+        except Exception as e:
+            retries += 1
+            log_event(f"Error synchronizing time (attempt {retries}): {e}")
+            if retries < max_retries:
+                await asyncio.sleep(retry_delay)  # Wait before retrying
+            else:
+                # Log final failure after exhausting retries
+                t = time.localtime()
+                offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
+                adjusted_time = time.mktime(t) + offset * 3600
+                log_event("Failed to synchronize time after multiple attempts", time.localtime(adjusted_time))
+                flash_led(times=5, delay=0.3)  # Indicate failure with 5 LED flashes
 
 
 # Serve HTTP requests
@@ -437,7 +448,7 @@ async def main():
 
     # Synchronize time
     await asyncio.sleep(1)
-    await sync_time()
+    await sync_time(max_retries=5, retry_delay=10)
 
     # Start the web server
     await asyncio.sleep(1)
