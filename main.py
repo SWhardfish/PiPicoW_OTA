@@ -9,7 +9,6 @@ import urequests
 import uos
 
 
-
 # LED setup
 led = Pin("LED", Pin.OUT)
 
@@ -81,9 +80,9 @@ def check_for_updates():
                     current_code = normalize_code(f.read())
                 if current_code != new_code:
                     print("Update available. Applying update...")
+                    flash_led(pattern=[(1, 5.0), (0, 0.5), (1, 0.1), (0, 0.5), (1, 5.0)])
                     update_script(new_code)
                     # Flash LED with the updated pattern
-                    flash_led(pattern=[(1, 5.0), (0, 0.5), (1, 0.1), (0, 0.5), (1, 5.0)])
                 else:
                     print("No updates available.")
                     t = time.localtime()
