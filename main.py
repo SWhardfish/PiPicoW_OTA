@@ -104,7 +104,7 @@ def log_event(message, t=None):
 
         # Check if log file exists and its size
         if file_exists(LOG_FILE) and uos.stat(LOG_FILE)[6] >= MAX_LOG_SIZE:
-            print("Log file size exceeded, rotating log file..")
+            print("Log file size exceeded, rotating log file.")
             rotate_log_file()
 
         # Append the message to the log file
@@ -343,7 +343,10 @@ async def start_web_server():
     s.bind(addr)
     s.listen(1)
     print("Web server listening on", addr)
-    log_event("Web server started")
+    t = time.localtime()
+    offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
+    adjusted_time = time.mktime(t) + offset * 3600
+    log_event("Web server started", time.localtime(adjusted_time))
     flash_led(2, delay=1.0)
 
     while True:
