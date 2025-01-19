@@ -237,11 +237,17 @@ async def serve(client):
         elif "GET /ota-update" in request:
             try:
                 # Trigger the OTA update check
-                log_event("Manual OTA update check triggered via web.")
+                t = time.localtime()
+                offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
+                adjusted_time = time.mktime(t) + offset * 3600
+                log_event("Manual OTA update check triggered via web.", time.localtime(adjusted_time))
                 update_status = check_for_updates()
                 response = f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n{update_status}"
             except Exception as e:
-                log_event(f"Error during manual OTA update: {e}")
+                t = time.localtime()
+                offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
+                adjusted_time = time.mktime(t) + offset * 3600
+                log_event(f"Error during manual OTA update: {e}", time.localtime(adjusted_time))
                 response = "HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\n\r\nError checking for updates."
             client.send(response)
         else:
