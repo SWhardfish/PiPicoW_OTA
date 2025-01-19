@@ -6,7 +6,6 @@ import ntptime
 import uasyncio as asyncio
 import config
 import urequests
-import os
 import uos
 
 
@@ -77,7 +76,11 @@ def update_script(new_code):
         f.write(new_code)
     print("Update applied. Restarting...")
     log_event("OTA update applied. Restarting...")
-    flash_led(2, delay=4.0)
+    flash_led(1, delay=5.0)
+    flash_led(0, delay=0.5)
+    flash_led(1, delay=0.1)
+    flash_led(0, delay=0.5)
+    flash_led(1, delay=5.0)
     machine.reset()  # Restart the device to apply the update
 
 
