@@ -172,10 +172,13 @@ async def monitor_wifi(wlan, ssid, password):
 async def sync_time():
     try:
         ntptime.settime()
-        log_event("Time synchronized with NTP")
+        t = time.localtime()
+        offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
+        adjusted_time = time.mktime(t) + offset * 3600
+        log_event("Time synchronized with NTP", time.localtime(adjusted_time))
         flash_led(3, delay=0.3)
     except Exception as e:
-        log_event(f"Error synchronizing time: {e}")
+        log_event(f"Error synchronizing time: {e}", time.localtime(adjusted_time))
 
 
 # Serve HTTP requests
