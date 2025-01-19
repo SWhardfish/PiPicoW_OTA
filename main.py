@@ -172,12 +172,16 @@ async def connect_wifi():
             await asyncio.sleep(1)
         else:
             print("Failed to connect to Wi-Fi")
+            log_event("Failed to connect to Wi-Fi")
             return None
 
     print("Connected to Wi-Fi")
+    ip_address = wlan.ifconfig()[0]  # Extract IP address
     print("Network config:", wlan.ifconfig())
+    log_event(f"Connected to Wi-Fi, IP address: {ip_address}")
     flash_led(times=7, delay=0.1)
     return wlan
+
 
 
 # Monitor Wi-Fi connection
