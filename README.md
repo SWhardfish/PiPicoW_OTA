@@ -1,2 +1,2 @@
 # PiPicoW_OTA
-Pi Pico W with OTA feature
+Pi Pico W with OTA update feature
