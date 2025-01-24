@@ -165,6 +165,7 @@ async def connect_wifi():
 
     if not wlan.isconnected():
         print("Connecting to Wi-Fi...")
+        log_event("Connecting to Wi-Fi...")
         wlan.connect(config.WIFI_SSID, config.WIFI_PASSWORD)
         for _ in range(30):  # Timeout after 30 seconds
             if wlan.isconnected():
@@ -181,7 +182,6 @@ async def connect_wifi():
     log_event(f"Connected to Wi-Fi, IP address: {ip_address}")
     flash_led(times=7, delay=0.1)
     return wlan
-
 
 
 # Monitor Wi-Fi connection
