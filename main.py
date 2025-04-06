@@ -8,10 +8,10 @@ import config
 import urequests
 import uos
 
-
-
-# LED setup
-led = Pin("LED", Pin.OUT)
+# MOSFET control setup - replace with your actual GPIO pin
+MOSFET_PIN = 0  # Change this to the GPIO pin connected to your MOSFET gate
+mosfet = Pin(MOSFET_PIN, Pin.OUT)
+mosfet.off()  # Start with LED strip off
 
 # Log file
 LOG_FILE = "system_log3.txt"
@@ -40,13 +40,15 @@ def normalize_code(code):
 
 def flash_led(times=None, delay=0.2, pattern=None):
     """
-    Flash the LED with either a simple repeating pattern or a custom pattern.
+    Flash the onboard LED with either a simple repeating pattern or a custom pattern.
+    This is now only used for status indications, not for LED strip control.
 
     :param times: Number of times to flash the LED (used for simple blinking).
     :param delay: Delay between flashes for simple blinking.
     :param pattern: Custom pattern as a list of (state, duration) tuples.
                     Example: [(1, 5.0), (0, 0.5), (1, 0.1)]
     """
+    led = Pin("LED", Pin.OUT)  # Onboard LED for status only
     if pattern:
         # Use the custom pattern
         for state, duration in pattern:
@@ -59,6 +61,7 @@ def flash_led(times=None, delay=0.2, pattern=None):
             time.sleep(delay)
             led.off()
             time.sleep(delay)
+    led.off()  # Ensure LED is off when done
 
 
 # Function to check for OTA updates
@@ -84,32 +87,32 @@ def check_for_updates():
                     print("Update available. Applying update...")
                     flash_led(pattern=[(1, 5.0), (0, 0.5), (1, 0.1), (0, 0.5), (1, 5.0)])
                     t = time.localtime()
-                    offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
+                    offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25) else 1
                     adjusted_time = time.mktime(t) + offset * 3600
                     log_event("Update available. Applying update...", time.localtime(adjusted_time))
                     update_script(new_code)
-                    # Flash LED with the updated pattern
-                else:
+                    else:
                     print("No updates available.")
                     t = time.localtime()
-                    offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
+                    offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25) else 1
                     adjusted_time = time.mktime(t) + offset * 3600
                     log_event("Checked for updates: No updates available.", time.localtime(adjusted_time))
-        else:
-            print(f"Failed to fetch update: {response.status_code}")
-            t = time.localtime()
-            offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
-            adjusted_time = time.mktime(t) + offset * 3600
-            log_event(f"Failed to fetch update: {response.status_code}", time.localtime(adjusted_time))
+                    else:
+                    print(f"Failed to fetch update: {response.status_code}")
+                    t = time.localtime()
+                    offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25) else 1
+                    adjusted_time = time.mktime(t) + offset * 3600
+                    log_event(f"Failed to fetch update: {response.status_code}", time.localtime(adjusted_time))
     except Exception as e:
         print(f"Error during OTA update: {e}")
         t = time.localtime()
-        offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
+        offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25) else 1
         adjusted_time = time.mktime(t) + offset * 3600
         log_event(f"Error during OTA update: {e}", time.localtime(adjusted_time))
 
+        # Function to update the script and restart
 
-# Function to update the script and restart
+
 def update_script(new_code):
     with open(SCRIPT_NAME, "w") as f:
         f.write(new_code)
@@ -162,6 +165,7 @@ def rotate_log_file():
 async def connect_wifi():
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
+    wlan.config(pm=0)  # Disable Wi-Fi power saving
 
     if not wlan.isconnected():
         print("Connecting to Wi-Fi...")
@@ -237,20 +241,20 @@ async def serve(client):
     try:
         request = client.recv(1024).decode("utf-8")
         if "GET /led/on" in request:
-            led.on()
+            mosfet.on()
             t = time.localtime()
             offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
             adjusted_time = time.mktime(t) + offset * 3600
-            log_event("LED turned ON", time.localtime(adjusted_time))
-            response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<h1>LED ON</h1>"
+            log_event("LED Strip turned ON", time.localtime(adjusted_time))
+            response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<h1>LED Strip ON</h1>"
             client.send(response)
         elif "GET /led/off" in request:
-            led.off()
+            mosfet.off()
             t = time.localtime()
             offset = 2 if (3 <= t[1] <= 10 and not (t[1] == 3 and t[2] < 25) and not (t[1] == 10 and t[2] >= 25)) else 1
             adjusted_time = time.mktime(t) + offset * 3600
-            log_event("LED turned OFF", time.localtime(adjusted_time))
-            response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<h1>LED OFF</h1>"
+            log_event("LED Strip turned OFF", time.localtime(adjusted_time))
+            response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<h1>LED Strip OFF</h1>"
             client.send(response)
         elif "GET /log" in request:
             serve_log(client)
@@ -272,125 +276,148 @@ async def serve(client):
             client.send(response)
         else:
             response = """\
-    HTTP/1.1 200 OK
-    Content-Type: text/html; charset=utf-8
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
 
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Pico W</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                text-align: center;
-                margin: 0;
-                padding: 0;
-                background: linear-gradient(to top, #003366, #66aaff);
-                color: white;
-                height: 100vh;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-            }
-            .button-container {
-                display: flex;
-                justify-content: center;
-                gap: 20px;
-            }
-            button {
-                width: 120px;
-                height: 50px;
-                font-size: 16px;
-                font-weight: bold;
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                border-radius: 10px;
-                cursor: pointer;
-            }
-            button:hover {
-                transform: scale(1.05);
-            }
-            .on-button {
-                font-size: 26px;
-                background-color: #4CAF50;
-            }
-            .off-button {
-                font-size: 26px;
-                background-color: #f44336;
-            }
-            .log-button {
-                width: 120px;
-                height: 25px;
-                font-size: 16px;
-                background-color: black;
-            }
-            .log-button:hover {
-                transform: scale(1.05);
-            }
-            .space {
-                margin-top: 20px;
-            }
-            .status-message {
-                margin-top: 20px;
-                font-size: 18px;
-                color: #ffffff;
-                text-align: center;
-        </style>
-        <script>
-            async function toggleLED(action) {
-                await fetch(`/led/${action}`);
-            }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pico W LED Strip Control</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to top, #003366, #66aaff);
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        button {
+            width: 120px;
+            height: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        .on-button {
+            font-size: 26px;
+            background-color: #4CAF50;
+        }
+        .off-button {
+            font-size: 26px;
+            background-color: #f44336;
+        }
+        .log-button {
+            width: 120px;
+            height: 25px;
+            font-size: 16px;
+            background-color: black;
+        }
+        .log-button:hover {
+            transform: scale(1.05);
+        }
+        .space {
+            margin-top: 20px;
+        }
+        .status-message {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #ffffff;
+            text-align: center;
+        }
+        .status-indicator {
+            margin-top: 20px;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 20px auto;
+            background-color: #f44336;
+            box-shadow: 0 0 20px #f44336;
+        }
+        .status-indicator.on {
+            background-color: #4CAF50;
+            box-shadow: 0 0 20px #4CAF50;
+        }
+    </style>
+    <script>
+        async function toggleLED(action) {
+            await fetch(`/led/${action}`);
+            updateStatusIndicator();
+        }
 
-            function showLog() {
-                // Get the base URL of the current page dynamically
-                const baseUrl = window.location.origin;
-                // Open the log page dynamically based on the current base URL
-                window.open(`${baseUrl}/log`, '_blank');
-            }
-            
-            async function triggerUpdate() {
-                try {
-                    const response = await fetch('/ota-update');
-                    const result = await response.text();
-                    // Display the result message on the webpage
-                    document.getElementById('update-message').innerText = result;
-                } catch (error) {
-                    // Handle errors
-                    document.getElementById('update-message').innerText = 'Failed to check for updates. Try again later.';
-                }
-            }
+        function showLog() {
+            const baseUrl = window.location.origin;
+            window.open(`${baseUrl}/log`, '_blank');
+        }
 
-        </script>
-    </head>
-    <body>
-        <h1>Pi Pico W Onboard LED Control</h1>
-        <div class="button-container">
-            <button class="on-button" onclick="toggleLED('on')">ON</button>
-            <button class="off-button" onclick="toggleLED('off')">OFF</button>
-        </div>
-        <div class="space"></div>
-        <div class="button-container">
-            <button class="log-button" onclick="showLog()">Show Log</button>
-        </div>
-        <div class="space"></div>
-        <div class="button-container">
-            <button class="log-button" onclick="triggerUpdate()">SW Updates</button> <!-- New button -->
-        </div>
-        <div class="status-message" id="update-message">
-            <!-- The update status message will be displayed here -->
-        </div>
-    </body>
-    </html>
-    """
+        async function triggerUpdate() {
+            try {
+                const response = await fetch('/ota-update');
+                const result = await response.text();
+                document.getElementById('update-message').innerText = result;
+            } catch (error) {
+                document.getElementById('update-message').innerText = 'Failed to check for updates. Try again later.';
+            }
+        }
 
+        async function updateStatusIndicator() {
+            try {
+                const response = await fetch('/led/status');
+                const status = await response.text();
+                const indicator = document.getElementById('led-status');
+                indicator.className = status === 'on' ? 'status-indicator on' : 'status-indicator';
+            } catch (error) {
+                console.error('Error fetching LED status:', error);
+            }
+        }
+
+        // Check LED status on page load
+        document.addEventListener('DOMContentLoaded', updateStatusIndicator);
+    </script>
+</head>
+<body>
+    <h1>Pi Pico W LED Strip Control</h1>
+    <div id="led-status" class="status-indicator"></div>
+    <div class="button-container">
+        <button class="on-button" onclick="toggleLED('on')">ON</button>
+        <button class="off-button" onclick="toggleLED('off')">OFF</button>
+    </div>
+    <div class="space"></div>
+    <div class="button-container">
+        <button class="log-button" onclick="showLog()">Show Log</button>
+    </div>
+    <div class="space"></div>
+    <div class="button-container">
+        <button class="log-button" onclick="triggerUpdate()">SW Updates</button>
+    </div>
+    <div class="status-message" id="update-message"></div>
+</body>
+</html>
+"""
             client.send(response)
     except Exception as e:
         log_event(f"Error: {e}", time.localtime())
     finally:
         client.close()
+
 
 # Serve log function
 def serve_log(client):
@@ -457,6 +484,7 @@ async def main():
     # Start the web server
     await asyncio.sleep(1)
     await start_web_server()
+
 
 # Run the main async loop
 try:
